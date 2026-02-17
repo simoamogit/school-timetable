@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: school-timetable-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false        # lo inserisci manualmente sulla dashboard Render
+      - key: JWT_SECRET
+        sync: false        # idem
