@@ -146,7 +146,7 @@ function TimetableCell({ day, hour, slot, cellNotes, cellSubs, isLocked, isDragO
 
 // ─── CellModal ───────────────────────────────────────────────────────────────
 function CellModal({ cell, hours, isLocked, notes, substitutions, initialTab,
-  onClose, onSave, onAddNote, onDeleteNote, onAddSub, onDeleteSub }) {
+  onClose, onSave, onDelete, onAddNote, onDeleteNote, onAddSub, onDeleteSub }) {
   const [tab, setTab] = useState(initialTab || (isLocked ? 'notes' : 'edit'));
   const [subject, setSubject] = useState(cell.subject || '');
   const [color, setColor] = useState(cell.color || '#2563eb');
@@ -162,12 +162,17 @@ function CellModal({ cell, hours, isLocked, notes, substitutions, initialTab,
   const cellNotes = notes.filter(n => n.day === cell.day && n.hour === cell.hour);
   const cellSubs = substitutions.filter(s => s.day === cell.day && s.hour === cell.hour);
 
-  const saveSlot = () => { onSave({ day: cell.day, hour: cell.hour, subject, color, slot_type: slotType }); onClose(); };
+  const saveSlot = () => {
+    onSave({ day: cell.day, hour: cell.hour, subject, color, slot_type: slotType });
+    onClose();
+  };
+
   const addNote = async () => {
     if (!noteContent.trim()) return;
     await onAddNote({ day: cell.day, hour: cell.hour, content: noteContent, note_date: noteDate || null });
     setNoteContent(''); setNoteDate('');
   };
+
   const addSub = async () => {
     if (!subText.trim() || !subDate) return;
     await onAddSub({ day: cell.day, hour: subHourFrom, hour_to: subHourTo, substitute: subText, sub_date: subDate, note: subNote });
@@ -183,24 +188,29 @@ function CellModal({ cell, hours, isLocked, notes, substitutions, initialTab,
   return (
     <div className="overlay" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal">
+
+        {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
           <div>
             <div style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--text3)', letterSpacing: '0.1em', marginBottom: 4 }}>
               {cell.day.toUpperCase()} · ORA {cell.hour}
-              <span style={{ marginLeft: 8 }} title="N: nota · S: supplenza · Esc: chiudi">
+              <span style={{ marginLeft: 8 }}>
                 <span className="shortcut-badge">N</span>
-                <span style={{ margin: '0 2px', color: 'var(--text3)' }}> </span>
+                {' '}
                 <span className="shortcut-badge">S</span>
               </span>
             </div>
             <h2 style={{ fontSize: 16, fontWeight: 600 }}>
               {slotType === 'free' ? 'Ora libera' : cell.subject || 'Cella vuota'}
             </h2>
-            {isLocked && <span style={{ fontSize: 11, color: 'var(--warning)', fontFamily: 'var(--mono)' }}>BLOCCATO</span>}
+            {isLocked && (
+              <span style={{ fontSize: 11, color: 'var(--warning)', fontFamily: 'var(--mono)' }}>BLOCCATO</span>
+            )}
           </div>
           <button onClick={onClose} className="btn-ghost" style={{ padding: '4px 10px', fontSize: 16 }}>×</button>
         </div>
 
+        {/* Tabs */}
         <div className="tabs">
           {tabs.map(t => (
             <button key={t.id} className={`tab ${tab === t.id ? 'active' : ''}`} onClick={() => setTab(t.id)}>
@@ -209,29 +219,37 @@ function CellModal({ cell, hours, isLocked, notes, substitutions, initialTab,
           ))}
         </div>
 
+        {/* ── Tab: Materia ── */}
         {tab === 'edit' && (
           <div>
             {/* Tipo slot */}
             <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
               {[{ v: 'subject', l: 'Materia' }, { v: 'free', l: 'Ora libera' }].map(opt => (
                 <button key={opt.v} onClick={() => setSlotType(opt.v)}
-                  style={{ flex: 1, padding: '7px', fontSize: 12, fontWeight: 600,
-                    borderRadius: 4, border: '1px solid',
+                  style={{
+                    flex: 1, padding: '7px', fontSize: 12, fontWeight: 600, borderRadius: 4,
+                    border: '1px solid',
                     borderColor: slotType === opt.v ? (opt.v === 'free' ? 'var(--free)' : 'var(--primary)') : 'var(--border)',
                     background: slotType === opt.v ? (opt.v === 'free' ? 'var(--free-bg)' : 'var(--primary-bg)') : 'transparent',
-                    color: slotType === opt.v ? (opt.v === 'free' ? 'var(--free)' : 'var(--primary)') : 'var(--text2)' }}>
+                    color: slotType === opt.v ? (opt.v === 'free' ? 'var(--free)' : 'var(--primary)') : 'var(--text2)'
+                  }}>
                   {opt.l}
                 </button>
               ))}
             </div>
 
+            {/* Campi materia */}
             {slotType === 'subject' && (
               <>
                 <div className="form-group">
                   <label className="label">Nome materia</label>
-                  <input placeholder="es. Matematica" value={subject}
+                  <input
+                    placeholder="es. Matematica"
+                    value={subject}
                     onChange={e => setSubject(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && saveSlot()} autoFocus />
+                    onKeyDown={e => e.key === 'Enter' && saveSlot()}
+                    autoFocus
+                  />
                 </div>
                 <div className="form-group">
                   <label className="label">Colore</label>
@@ -240,26 +258,54 @@ function CellModal({ cell, hours, isLocked, notes, substitutions, initialTab,
                       <button key={c} onClick={() => setColor(c)} style={{
                         width: 28, height: 28, borderRadius: 4, background: c, padding: 0,
                         border: color === c ? '2px solid var(--text)' : '2px solid transparent',
-                        outline: color === c ? `2px solid ${c}` : 'none', outlineOffset: 1 }} />
+                        outline: color === c ? `2px solid ${c}` : 'none', outlineOffset: 1
+                      }} />
                     ))}
                     <input type="color" value={color} onChange={e => setColor(e.target.value)}
                       style={{ width: 28, height: 28, border: '1px solid var(--border)', padding: 2, borderRadius: 4 }} />
                   </div>
                 </div>
-                <div style={{ borderLeft: `3px solid ${color}`, padding: '8px 12px', marginBottom: 20,
-                  background: 'var(--bg2)', borderRadius: `0 4px 4px 0` }}>
+                {/* Anteprima */}
+                <div style={{
+                  borderLeft: `3px solid ${color}`, padding: '8px 12px', marginBottom: 20,
+                  background: 'var(--bg2)', borderRadius: '0 4px 4px 0'
+                }}>
                   <span style={{ fontWeight: 600, fontSize: 14 }}>{subject || 'Anteprima materia'}</span>
                 </div>
               </>
             )}
 
+            {/* Info ora libera */}
             {slotType === 'free' && (
-              <div style={{ background: 'var(--free-bg)', border: '1px solid var(--free)', borderRadius: 6,
-                padding: '12px 16px', marginBottom: 20, color: 'var(--free)', fontSize: 13 }}>
+              <div style={{
+                background: 'var(--free-bg)', border: '1px solid var(--free)', borderRadius: 6,
+                padding: '12px 16px', marginBottom: 20, color: 'var(--free)', fontSize: 13
+              }}>
                 Questa ora verrà mostrata come buco / ora libera nella tabella.
               </div>
             )}
 
+            {/* Svuota cella — solo se ha già una materia salvata */}
+            {cell.subject && (
+              <button
+                onClick={() => {
+                  if (window.confirm(`Eliminare "${cell.subject}" da ${cell.day} ora ${cell.hour}?`)) {
+                    onDelete({ day: cell.day, hour: cell.hour });
+                    onClose();
+                  }
+                }}
+                style={{
+                  width: '100%', marginBottom: 10, padding: 8, fontSize: 13,
+                  background: 'transparent', border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius)', color: 'var(--danger)',
+                  cursor: 'pointer', fontFamily: 'var(--font)'
+                }}
+              >
+                Svuota cella
+              </button>
+            )}
+
+            {/* Azioni principali */}
             <div style={{ display: 'flex', gap: 8 }}>
               <button className="btn-ghost" onClick={onClose} style={{ flex: 1 }}>Annulla</button>
               <button className="btn-primary" onClick={saveSlot} style={{ flex: 2 }}>Salva</button>
@@ -267,20 +313,30 @@ function CellModal({ cell, hours, isLocked, notes, substitutions, initialTab,
           </div>
         )}
 
+        {/* ── Tab: Note ── */}
         {tab === 'notes' && (
           <div>
             <div className="form-group">
               <label className="label">Nuova nota</label>
-              <textarea placeholder="Nota per questa lezione..." value={noteContent}
-                onChange={e => setNoteContent(e.target.value)} rows={3} style={{ resize: 'vertical' }} autoFocus={tab === 'notes'} />
+              <textarea
+                placeholder="Nota per questa lezione..."
+                value={noteContent}
+                onChange={e => setNoteContent(e.target.value)}
+                rows={3}
+                style={{ resize: 'vertical' }}
+                autoFocus
+              />
             </div>
             <div className="form-group">
               <label className="label">Data (verrà eliminata il giorno dopo)</label>
               <input type="date" value={noteDate} onChange={e => setNoteDate(e.target.value)} />
             </div>
             <button className="btn-primary" onClick={addNote} disabled={!noteContent.trim()}
-              style={{ width: '100%', marginBottom: 16 }}>Aggiungi nota</button>
-            {cellNotes.length === 0 ? <div className="empty-state">Nessuna nota.</div>
+              style={{ width: '100%', marginBottom: 16 }}>
+              Aggiungi nota
+            </button>
+            {cellNotes.length === 0
+              ? <div className="empty-state">Nessuna nota.</div>
               : cellNotes.map(n => (
                 <div key={n.id} className="note-card">
                   <div style={{ flex: 1 }}>
@@ -290,20 +346,26 @@ function CellModal({ cell, hours, isLocked, notes, substitutions, initialTab,
                   <button className="btn-danger" onClick={() => onDeleteNote(n.id)}
                     style={{ padding: '3px 8px', fontSize: 12 }}>×</button>
                 </div>
-              ))}
+              ))
+            }
           </div>
         )}
 
+        {/* ── Tab: Supplenze ── */}
         {tab === 'subs' && (
           <div>
             <div className="form-group">
               <label className="label">Supplente / materia alternativa</label>
-              <input placeholder="es. Prof. Rossi" value={subText} onChange={e => setSubText(e.target.value)} autoFocus={tab === 'subs'} />
+              <input placeholder="es. Prof. Rossi" value={subText}
+                onChange={e => setSubText(e.target.value)} autoFocus />
             </div>
             <div className="form-row">
               <div className="form-group">
                 <label className="label">Ora inizio</label>
-                <select value={subHourFrom} onChange={e => { setSubHourFrom(Number(e.target.value)); setSubHourTo(t => Math.max(t, Number(e.target.value))); }}>
+                <select value={subHourFrom} onChange={e => {
+                  setSubHourFrom(Number(e.target.value));
+                  setSubHourTo(t => Math.max(t, Number(e.target.value)));
+                }}>
                   {hours.map(h => <option key={h} value={h}>{h}ª ora</option>)}
                 </select>
               </div>
@@ -323,8 +385,11 @@ function CellModal({ cell, hours, isLocked, notes, substitutions, initialTab,
               <input placeholder="Dettagli..." value={subNote} onChange={e => setSubNote(e.target.value)} />
             </div>
             <button className="btn-primary" onClick={addSub} disabled={!subText.trim() || !subDate}
-              style={{ width: '100%', marginBottom: 16 }}>Aggiungi supplenza</button>
-            {cellSubs.length === 0 ? <div className="empty-state">Nessuna supplenza.</div>
+              style={{ width: '100%', marginBottom: 16 }}>
+              Aggiungi supplenza
+            </button>
+            {cellSubs.length === 0
+              ? <div className="empty-state">Nessuna supplenza.</div>
               : [...cellSubs].sort((a, b) => new Date(b.sub_date) - new Date(a.sub_date)).map(s => (
                 <div key={s.id} className="note-card">
                   <div style={{ flex: 1 }}>
@@ -339,9 +404,11 @@ function CellModal({ cell, hours, isLocked, notes, substitutions, initialTab,
                   <button className="btn-danger" onClick={() => onDeleteSub(s.id)}
                     style={{ padding: '3px 8px', fontSize: 12 }}>×</button>
                 </div>
-              ))}
+              ))
+            }
           </div>
         )}
+
       </div>
     </div>
   );
@@ -635,6 +702,11 @@ export default function TimetablePage({ user, onLogout, theme, onThemeChange, is
     });
   };
 
+  const handleDeleteSlot = async ({ day, hour }) => {
+  await api.delete('/timetable/slots', { data: { day, hour } });
+  setSlots(prev => prev.filter(s => !(s.day === day && s.hour === hour)));
+};
+
   const handleSwap = async (from, to) => {
     if (from.day === to.day && from.hour === to.hour) return;
     try {
@@ -918,22 +990,22 @@ export default function TimetablePage({ user, onLogout, theme, onThemeChange, is
 
       {/* CellModal */}
       {selectedCell && (
-        <CellModal
-          cell={selectedCell}
-          hours={hours}
-          isLocked={isLocked}
-          notes={notes}
-          substitutions={substitutions}
-          initialTab={modalInitialTab}
-          onClose={() => { setSelectedCell(null); setModalInitialTab(null); }}
-          onSave={handleSave}
-          onAddNote={handleAddNote}
-          onDeleteNote={handleDeleteNote}
-          onAddSub={handleAddSub}
-          onDeleteSub={handleDeleteSub}
-        />
-      )}
-
+      <CellModal
+        cell={selectedCell}
+        hours={hours}
+        isLocked={isLocked}
+        notes={notes}
+        substitutions={substitutions}
+        initialTab={modalInitialTab}
+        onClose={() => { setSelectedCell(null); setModalInitialTab(null); }}
+        onSave={handleSave}
+        onDelete={handleDeleteSlot}
+        onAddNote={handleAddNote}
+        onDeleteNote={handleDeleteNote}
+        onAddSub={handleAddSub}
+        onDeleteSub={handleDeleteSub}
+      />
+    )}
       {/* SettingsPanel */}
       {showSettings && (
         <SettingsPanel

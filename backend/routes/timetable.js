@@ -192,6 +192,23 @@ router.post('/slots', async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: 'Errore server' }); }
 });
 
+// Elimina una cella (svuota la materia)
+router.delete('/slots', async (req, res) => {
+  const { day, hour } = req.body;
+  try {
+    const r = await pool.query(
+      'DELETE FROM slots WHERE user_id=$1 AND day=$2 AND hour=$3 RETURNING *',
+      [req.user.id, day, hour]
+    );
+    if (r.rows[0]) {
+      await logChange(req.user.id, 'slot_deleted', {
+        day, hour, subject: r.rows[0].subject
+      });
+    }
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: 'Errore server' }); }
+});
+
 // Swap celle (drag & drop)
 router.post('/slots/swap', async (req, res) => {
   const { from, to } = req.body;
