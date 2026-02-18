@@ -9,18 +9,14 @@ export default function SetupPage({ onComplete }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const toggleDay = day => {
-    setSelectedDays(prev =>
-      prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
-    );
-  };
+  const toggleDay = day => setSelectedDays(prev =>
+    prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
+  );
 
   const save = async () => {
     if (selectedDays.length === 0) return setError('Seleziona almeno un giorno');
-    if (hoursPerDay < 1 || hoursPerDay > 12) return setError('Ore tra 1 e 12');
     setLoading(true);
     try {
-      // Mantieni l'ordine originale dei giorni
       const ordered = ALL_DAYS.filter(d => selectedDays.includes(d));
       await api.post('/timetable/settings', { schoolDays: ordered, hoursPerDay: Number(hoursPerDay) });
       onComplete();
@@ -32,109 +28,61 @@ export default function SetupPage({ onComplete }) {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: 16,
-      background: 'linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%)'
-    }}>
-      <div style={{ width: '100%', maxWidth: 480 }}>
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{ fontSize: 48, marginBottom: 12 }}>🗓️</div>
-          <h1 style={{ fontSize: 24, fontWeight: 800 }}>Configura il tuo Orario</h1>
-          <p style={{ color: 'var(--text2)', marginTop: 8, fontSize: 14 }}>
-            Questo ti verrà chiesto solo la prima volta
-          </p>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+      <div style={{ width: '100%', maxWidth: 420 }}>
+        <div style={{ marginBottom: 28 }}>
+          <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text3)', letterSpacing: '0.12em', marginBottom: 8 }}>
+            PRIMO ACCESSO
+          </div>
+          <h1 style={{ fontSize: 20, fontWeight: 600 }}>Configura il tuo orario</h1>
+          <p style={{ color: 'var(--text2)', fontSize: 13, marginTop: 4 }}>Potrai modificarlo in seguito dalle impostazioni.</p>
         </div>
 
-        <div style={{
-          background: 'var(--card)',
-          border: '1px solid var(--border)',
-          borderRadius: 'var(--radius)',
-          padding: 32,
-          boxShadow: 'var(--shadow)'
-        }}>
+        <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, padding: 24 }}>
           {error && (
-            <div style={{
-              background: 'rgba(239,68,68,0.12)',
-              border: '1px solid rgba(239,68,68,0.4)',
-              borderRadius: 8, padding: '10px 14px', marginBottom: 20,
-              color: '#fca5a5', fontSize: 14
-            }}>
-              ⚠️ {error}
+            <div style={{ background: 'var(--danger-bg)', border: '1px solid var(--danger)', borderRadius: 'var(--radius)',
+              padding: '8px 12px', marginBottom: 16, color: 'var(--danger)', fontSize: 13 }}>
+              {error}
             </div>
           )}
 
           <div className="form-group">
-            <label className="label">📅 Giorni scolastici</label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
+            <label className="label">Giorni scolastici</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 2 }}>
               {ALL_DAYS.map(day => (
-                <button
-                  key={day}
-                  onClick={() => toggleDay(day)}
-                  style={{
-                    padding: '8px 16px',
-                    borderRadius: 20,
-                    fontSize: 13,
-                    fontWeight: 600,
-                    border: '1.5px solid',
-                    borderColor: selectedDays.includes(day) ? 'var(--primary)' : 'var(--border)',
-                    background: selectedDays.includes(day) ? 'rgba(99,102,241,0.18)' : 'transparent',
-                    color: selectedDays.includes(day) ? 'var(--primary)' : 'var(--text2)',
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  {day}
+                <button key={day} onClick={() => toggleDay(day)} style={{
+                  padding: '6px 12px', borderRadius: 4, fontSize: 12, fontWeight: 500,
+                  border: '1px solid',
+                  borderColor: selectedDays.includes(day) ? 'var(--primary)' : 'var(--border)',
+                  background: selectedDays.includes(day) ? 'var(--primary-bg)' : 'transparent',
+                  color: selectedDays.includes(day) ? 'var(--primary)' : 'var(--text2)',
+                }}>
+                  {day.slice(0, 3)}
                 </button>
               ))}
             </div>
           </div>
 
           <div className="form-group">
-            <label className="label">⏰ Ore per giorno: <span style={{ color: 'var(--primary)', fontSize: 18 }}>{hoursPerDay}</span></label>
-            <input
-              type="range"
-              min="1"
-              max="12"
-              value={hoursPerDay}
-              onChange={e => setHoursPerDay(e.target.value)}
-              style={{
-                width: '100%',
-                accentColor: 'var(--primary)',
-                background: 'transparent',
-                border: 'none',
-                padding: '8px 0',
-                cursor: 'pointer'
-              }}
-            />
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text2)', marginTop: 2 }}>
-              <span>1 ora</span>
-              <span>12 ore</span>
+            <label className="label">
+              Ore massime per giorno —{' '}
+              <span style={{ color: 'var(--primary)', fontFamily: 'var(--mono)' }}>{hoursPerDay}</span>
+            </label>
+            <input type="range" min="1" max="12" value={hoursPerDay}
+              onChange={e => setHoursPerDay(e.target.value)} style={{ width: '100%' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text3)', marginTop: 4, fontFamily: 'var(--mono)' }}>
+              <span>1</span><span>12</span>
             </div>
           </div>
 
-          {/* Preview */}
-          <div style={{
-            background: 'var(--bg)',
-            border: '1px solid var(--border)',
-            borderRadius: 8,
-            padding: '12px 16px',
-            marginBottom: 24,
-            fontSize: 13,
-            color: 'var(--text2)'
-          }}>
-            📊 Riepilogo: <strong style={{ color: 'var(--text)' }}>{selectedDays.length} giorni</strong> × <strong style={{ color: 'var(--text)' }}>{hoursPerDay} ore</strong> = <strong style={{ color: 'var(--primary)' }}>{selectedDays.length * hoursPerDay} ore/settimana</strong>
+          <div style={{ background: 'var(--bg2)', borderRadius: 4, padding: '10px 12px', marginBottom: 20,
+            fontSize: 12, color: 'var(--text2)', fontFamily: 'var(--mono)' }}>
+            {selectedDays.length} giorni × {hoursPerDay} ore max ={' '}
+            <strong style={{ color: 'var(--primary)' }}>{selectedDays.length * hoursPerDay} celle</strong>
           </div>
 
-          <button
-            className="btn-primary"
-            onClick={save}
-            disabled={loading}
-            style={{ width: '100%', padding: 14, fontSize: 15 }}
-          >
-            {loading ? '⏳ Salvataggio...' : '✓ Crea il mio Orario →'}
+          <button className="btn-primary" onClick={save} disabled={loading} style={{ width: '100%', padding: 10 }}>
+            {loading ? 'Salvataggio...' : 'Crea orario'}
           </button>
         </div>
       </div>

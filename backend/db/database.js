@@ -3,7 +3,6 @@ const { Pool } = require('pg');
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
-  // Forza IPv4 — evita problemi su Render free tier
   family: 4
 });
 
@@ -18,7 +17,6 @@ async function initDB() {
         password TEXT NOT NULL,
         created_at TIMESTAMPTZ DEFAULT NOW()
       );
-
       CREATE TABLE IF NOT EXISTS user_settings (
         id SERIAL PRIMARY KEY,
         user_id INTEGER UNIQUE NOT NULL REFERENCES users(id),
@@ -27,17 +25,15 @@ async function initDB() {
         setup_complete INTEGER NOT NULL DEFAULT 0,
         locked INTEGER NOT NULL DEFAULT 0
       );
-
       CREATE TABLE IF NOT EXISTS slots (
         id SERIAL PRIMARY KEY,
         user_id INTEGER NOT NULL REFERENCES users(id),
         day TEXT NOT NULL,
         hour INTEGER NOT NULL,
         subject TEXT NOT NULL DEFAULT '',
-        color TEXT NOT NULL DEFAULT '#6366f1',
+        color TEXT NOT NULL DEFAULT '#2563eb',
         UNIQUE(user_id, day, hour)
       );
-
       CREATE TABLE IF NOT EXISTS notes (
         id SERIAL PRIMARY KEY,
         user_id INTEGER NOT NULL REFERENCES users(id),
@@ -47,7 +43,6 @@ async function initDB() {
         note_date TEXT,
         created_at TIMESTAMPTZ DEFAULT NOW()
       );
-
       CREATE TABLE IF NOT EXISTS substitutions (
         id SERIAL PRIMARY KEY,
         user_id INTEGER NOT NULL REFERENCES users(id),
@@ -58,6 +53,12 @@ async function initDB() {
         note TEXT DEFAULT ''
       );
     `);
+
+    // Migrazioni sicure
+    await client.query(`ALTER TABLE substitutions ADD COLUMN IF NOT EXISTS hour_to INTEGER`);
+    await client.query(`UPDATE substitutions SET hour_to = hour WHERE hour_to IS NULL`);
+    await client.query(`ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS theme TEXT DEFAULT 'dark'`);
+
     console.log('✅ Database inizializzato');
   } finally {
     client.release();
