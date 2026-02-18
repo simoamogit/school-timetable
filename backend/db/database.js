@@ -23,7 +23,8 @@ async function initDB() {
         school_days TEXT NOT NULL DEFAULT '[]',
         hours_per_day INTEGER NOT NULL DEFAULT 6,
         setup_complete INTEGER NOT NULL DEFAULT 0,
-        locked INTEGER NOT NULL DEFAULT 0
+        locked INTEGER NOT NULL DEFAULT 0,
+        theme TEXT DEFAULT 'dark'
       );
       CREATE TABLE IF NOT EXISTS slots (
         id SERIAL PRIMARY KEY,
@@ -48,16 +49,37 @@ async function initDB() {
         user_id INTEGER NOT NULL REFERENCES users(id),
         day TEXT NOT NULL,
         hour INTEGER NOT NULL,
+        hour_to INTEGER,
         substitute TEXT NOT NULL,
         sub_date TEXT NOT NULL,
         note TEXT DEFAULT ''
       );
+      CREATE TABLE IF NOT EXISTS change_log (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id),
+        action TEXT NOT NULL,
+        details JSONB,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE TABLE IF NOT EXISTS share_tokens (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER UNIQUE NOT NULL REFERENCES users(id),
+        token TEXT UNIQUE NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
     `);
 
-    // Migrazioni sicure
-    await client.query(`ALTER TABLE substitutions ADD COLUMN IF NOT EXISTS hour_to INTEGER`);
-    await client.query(`UPDATE substitutions SET hour_to = hour WHERE hour_to IS NULL`);
-    await client.query(`ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS theme TEXT DEFAULT 'dark'`);
+    // Migrazioni sicure — non toccano dati esistenti
+    const migrations = [
+      `ALTER TABLE substitutions ADD COLUMN IF NOT EXISTS hour_to INTEGER`,
+      `ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS avatar_color TEXT DEFAULT '#2563eb'`,
+      `ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS hidden_hours TEXT DEFAULT '[]'`,
+      `ALTER TABLE slots ADD COLUMN IF NOT EXISTS slot_type TEXT DEFAULT 'subject'`,
+      `UPDATE substitutions SET hour_to = hour WHERE hour_to IS NULL`,
+    ];
+    for (const m of migrations) {
+      try { await client.query(m); } catch (_) { /* già presente */ }
+    }
 
     console.log('✅ Database inizializzato');
   } finally {
