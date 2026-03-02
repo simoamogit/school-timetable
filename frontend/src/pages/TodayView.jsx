@@ -12,7 +12,7 @@ function hourLabel(h) {
   return `${startH}:00 – ${startH + 1}:00`;
 }
 
-export default function TodayView({ settings, slots, notes, substitutions, isLocked, onOpenCell }) {
+export default function TodayView({ settings, slots, notes, substitutions, isLocked, onOpenCell, extraHours = 0 }) {
   const [tomorrowName, setTomorrowName] = useState(getTomorrowName);
   const [tomorrowDate, setTomorrowDate] = useState(() => {
     const d = new Date();
@@ -32,7 +32,8 @@ export default function TodayView({ settings, slots, notes, substitutions, isLoc
 
   const schoolDays = settings?.schoolDays || [];
   const hoursPerDay = settings?.hoursPerDay || 6;
-  const hours = Array.from({ length: hoursPerDay }, (_, i) => i + 1);
+  const maxHour = Math.min(hoursPerDay + extraHours, 10);
+  const hours = Array.from({ length: maxHour }, (_, i) => i + 1);
   const isSchoolDay = schoolDays.includes(tomorrowName);
 
   const getSlot = (hour) => slots.find(s => s.day === tomorrowName && s.hour === hour);

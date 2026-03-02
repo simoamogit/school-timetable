@@ -1060,14 +1060,15 @@ export default function TimetablePage({ user, onLogout, theme, onThemeChange, is
 
       {/* ── Contenuto ── */}
       {view === 'today' ? (
-        <TodayView
-          settings={settings}
-          slots={slots}
-          notes={notes}
-          substitutions={substitutions}
-          isLocked={isLocked}
-          onOpenCell={openCell}
-        />
+      <TodayView
+        settings={settings}
+        slots={slots}
+        notes={notes}
+        substitutions={substitutions}
+        isLocked={isLocked}
+        onOpenCell={openCell}
+        extraHours={extraHours}
+      />
       ) : timetableHidden ? (
         /* Schermata "orario nascosto" */
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center',
